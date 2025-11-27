@@ -105,7 +105,7 @@ module Tools
       return { error: "Tool not found: #{tool_name}" } unless schema
 
       service_class = schema[:service_class]
-      result = service_class.new.public_send(schema[:entrypoint], **symbolize_keys(arguments))
+      result = service_class.new.public_send(schema[:entrypoint], **deep_symbolize(arguments))
 
       { tool: summary_payload(schema), result: result }
     rescue ArgumentError => e
@@ -151,11 +151,18 @@ module Tools
       nil
     end
 
-    sig { params(hash: T::Hash[T.untyped, T.untyped]).returns(T::Hash[Symbol, T.untyped]) }
-    def symbolize_keys(hash)
-      hash.each_with_object({}) do |(key, value), result|
-        symbol_key = key.is_a?(String) ? key.to_sym : key
-        result[symbol_key] = value
+    sig { params(value: T.untyped).returns(T.untyped) }
+    def deep_symbolize(value)
+      case value
+      when Hash
+        value.each_with_object({}) do |(key, nested), result|
+          symbol_key = key.is_a?(String) ? key.to_sym : key
+          result[symbol_key] = deep_symbolize(nested)
+        end
+      when Array
+        value.map { |element| deep_symbolize(element) }
+      else
+        value
       end
     end
   end

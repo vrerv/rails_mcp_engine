@@ -45,6 +45,23 @@ class MetaToolServiceTest < Minitest::Test
     assert_equal 'Hello, Ada!', run_result[:result]
   end
 
+  def test_run_tool_deep_symbolizes_nested_arguments
+    build_nested_service
+
+    arguments = {
+      'payload' => {
+        'user' => {
+          'name' => 'Ada',
+          'tags' => [{ 'label' => 'friend' }]
+        }
+      }
+    }
+
+    run_result = meta_service.call(action: 'run', tool_name: 'nested', class_name: nil, query: nil, arguments: arguments)
+
+    assert_equal({ name: 'Ada', tags: ['friend'] }, run_result[:result])
+  end
+
   private
 
   def meta_service
@@ -67,7 +84,31 @@ class MetaToolServiceTest < Minitest::Test
     end)
   end
 
+  def build_nested_service
+    Tools.const_set(:NestedService, Class.new do
+      extend T::Sig
+      extend ToolMeta
+
+      tool_name 'nested'
+      tool_description 'Return nested payload details'
+      tool_param :payload, description: 'Nested payload'
+
+      sig do
+        params(
+          payload: T::Hash[Symbol, T.untyped]
+        ).returns(T::Hash[Symbol, T.untyped])
+      end
+      def call(payload:)
+        {
+          name: payload[:user][:name],
+          tags: payload[:user][:tags].map { |tag| tag[:label] }
+        }
+      end
+    end)
+  end
+
   def remove_constants
     Tools.send(:remove_const, :SampleService) if Tools.const_defined?(:SampleService, false)
+    Tools.send(:remove_const, :NestedService) if Tools.const_defined?(:NestedService, false)
   end
 end
