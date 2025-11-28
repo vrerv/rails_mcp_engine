@@ -33,10 +33,34 @@ class ChatController < ApplicationController
     tool_classes = get_tool_classes
     chat = tool_classes.reduce(chat) { |c, tool_class| c.with_tool(tool_class) }
 
+    # Build context message with tool descriptions and conversation history
+    tool_descriptions = schemas.map { |s| "- #{s[:name]}: #{s[:description]}" }.join("\n")
+
+    # Prepare the message with full context
+    context_parts = []
+
+    # Add system message about tools (only on first message)
+    if conversation_history.empty?
+      context_parts << 'You have access to the following tools:'
+      context_parts << tool_descriptions
+      context_parts << "\nUse these tools when appropriate to help answer questions."
+    else
+      # Include conversation history for context
+      context_parts << 'Previous conversation:'
+      conversation_history.each do |msg|
+        role_label = msg[:role] == 'user' ? 'User' : 'Assistant'
+        context_parts << "#{role_label}: #{msg[:content]}"
+      end
+      context_parts << "\nCurrent question:"
+    end
+
+    context_parts << user_message
+    full_message = context_parts.join("\n\n")
+
     # Ask the question and capture response
     begin
       # Ruby LLM handles tool calling automatically
-      response = chat.ask(user_message)
+      response = chat.ask(full_message)
       assistant_content = response.content
 
       # Build conversation history manually since Ruby LLM manages it internally
