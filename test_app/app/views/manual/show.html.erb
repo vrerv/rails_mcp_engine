@@ -16,7 +16,7 @@
 </div>
 
 <div class="card">
-  <h2>2) Run a tool via RubyLLM</h2>
+  <h2>2) Run a tool</h2>
   <p>Select a tool and provide JSON arguments to send through the generated RubyLLM wrapper.</p>
   <%= form_with url: run_tool_path, method: :post do %>
     <label for="tool_name">Tool name</label><br>
@@ -40,14 +40,98 @@
   <% if @tools.empty? %>
     <p>No tools have been registered yet. Start by adding one above.</p>
   <% else %>
-    <ul>
-      <% @tools.each do |tool| %>
-        <li>
-          <span class="pill"><%= tool[:name] %></span>
-          <strong><%= tool[:description] %></strong><br>
-          <small><%= tool[:params].map { |p| p[:name] }.join(', ') %></small>
+    <ul class="tool-list">
+      <% @tools.each_with_index do |tool, index| %>
+        <li class="tool-item">
+          <div class="tool-header">
+            <div onclick="toggleToolDetails(<%= index %>)" style="flex: 1; display: flex; align-items: center; cursor: pointer;">
+              <span class="pill"><%= tool[:name] %></span>
+              <strong><%= tool[:description] %></strong>
+              <span class="expand-icon" id="expand-icon-<%= index %>">▼</span>
+            </div>
+            <%= button_to 'Delete', delete_tool_path(tool[:name]), 
+                method: :delete, 
+                class: 'delete-tool-btn',
+                data: { confirm: "Are you sure you want to delete '#{tool[:name]}'?" } %>
+          </div>
+          <div class="tool-details" id="tool-details-<%= index %>" style="display: none;">
+            <div class="detail-section">
+              <h4>Parameters</h4>
+              <% if tool[:params].empty? %>
+                <p class="no-params">No parameters</p>
+              <% else %>
+                <table class="params-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Required</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% tool[:params].each do |param| %>
+                      <tr>
+                        <td><code><%= param[:name] %></code></td>
+                        <td><span class="type-badge"><%= param[:type] %></span></td>
+                        <td><%= param[:required] ? '✓' : '✗' %></td>
+                        <td><%= param[:description] || '-' %></td>
+                      </tr>
+                      <% if param[:enum].present? %>
+                        <tr class="enum-row">
+                          <td colspan="4">
+                            <strong>Allowed values:</strong> <%= param[:enum].join(', ') %>
+                          </td>
+                        </tr>
+                      <% end %>
+                      <% if param[:children].present? %>
+                        <tr class="children-row">
+                          <td colspan="4">
+                            <strong>Nested fields:</strong>
+                            <ul class="nested-params">
+                              <% param[:children].each do |child| %>
+                                <li>
+                                  <code><%= child[:name] %></code>
+                                  (<span class="type-badge"><%= child[:type] %></span>)
+                                  <%= child[:required] ? '[required]' : '[optional]' %>
+                                  - <%= child[:description] || 'No description' %>
+                                </li>
+                              <% end %>
+                            </ul>
+                          </td>
+                        </tr>
+                      <% end %>
+                    <% end %>
+                  </tbody>
+                </table>
+              <% end %>
+            </div>
+            <div class="detail-section">
+              <h4>Return Type</h4>
+              <p><span class="type-badge"><%= tool[:return_type][:type] %></span></p>
+            </div>
+            <div class="detail-section">
+              <h4>Full Schema</h4>
+              <pre><%= JSON.pretty_generate(tool.except(:service_class)) %></pre>
+            </div>
+          </div>
         </li>
       <% end %>
     </ul>
   <% end %>
 </div>
+
+<script>
+function toggleToolDetails(index) {
+  const details = document.getElementById('tool-details-' + index);
+  const icon = document.getElementById('expand-icon-' + index);
+  
+  if (details.style.display === 'none') {
+    details.style.display = 'block';
+    icon.textContent = '▲';
+  } else {
+    details.style.display = 'none';
+    icon.textContent = '▼';
+  }
+}
+</script>
