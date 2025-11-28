@@ -42,6 +42,20 @@ class ManualController < ApplicationController
     redirect_to root_path
   end
 
+  def delete_tool
+    tool_name = params[:tool_name].to_s
+    schema = schemas.find { |s| s[:name] == tool_name }
+
+    result = if schema.nil?
+               { error: "Tool not found: #{tool_name}" }
+             else
+               delete_tool_from_registry(schema[:service_class])
+             end
+
+    flash[:register_result] = result
+    redirect_to root_path
+  end
+
   private
 
   def schemas
@@ -73,6 +87,18 @@ class ManualController < ApplicationController
     result = tool_class.new.execute(**arguments.symbolize_keys)
 
     { tool: { name: schema[:name], description: schema[:description] }, result: result }
+  rescue StandardError => e
+    { error: e.message }
+  end
+
+  def delete_tool_from_registry(service_class)
+    ToolMeta.registry.delete(service_class)
+
+    # Also remove the RubyLLM tool class constant
+    tool_constant = ToolSchema::RubyLlmFactory.tool_class_name(service_class)
+    Tools.send(:remove_const, tool_constant) if Tools.const_defined?(tool_constant, false)
+
+    { success: 'Tool deleted successfully' }
   rescue StandardError => e
     { error: e.message }
   end

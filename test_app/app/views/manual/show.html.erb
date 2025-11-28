@@ -43,10 +43,16 @@
     <ul class="tool-list">
       <% @tools.each_with_index do |tool, index| %>
         <li class="tool-item">
-          <div class="tool-header" onclick="toggleToolDetails(<%= index %>)">
-            <span class="pill"><%= tool[:name] %></span>
-            <strong><%= tool[:description] %></strong>
-            <span class="expand-icon" id="expand-icon-<%= index %>">▼</span>
+          <div class="tool-header">
+            <div onclick="toggleToolDetails(<%= index %>)" style="flex: 1; display: flex; align-items: center; cursor: pointer;">
+              <span class="pill"><%= tool[:name] %></span>
+              <strong><%= tool[:description] %></strong>
+              <span class="expand-icon" id="expand-icon-<%= index %>">▼</span>
+            </div>
+            <%= button_to 'Delete', delete_tool_path(tool[:name]), 
+                method: :delete, 
+                class: 'delete-tool-btn',
+                data: { confirm: "Are you sure you want to delete '#{tool[:name]}'?" } %>
           </div>
           <div class="tool-details" id="tool-details-<%= index %>" style="display: none;">
             <div class="detail-section">
