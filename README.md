@@ -81,15 +81,15 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ### Manual Playground
 
-The repository includes a minimal Rails app under `manual_app/` for quick manual validation.
+The repository includes a minimal Rails app under `test_app/` for quick manual validation.
 
 ```bash
-cd manual_app
+cd test_app
 bundle install
 bundle exec rails server -p 4000
 ```
 
-See [`manual_app/README.md`](manual_app/README.md) for more details.
+See [`test_app/README.md`](test_app/README.md) for more details.
 
 ## License
 

@@ -7,10 +7,10 @@ This minimal Rails app lets you manually register and run tool services against 
 - Bundler (`gem install bundler`)
 
 ## Setup
-Install dependencies from the `manual_app` directory:
+Install dependencies from the `test_app` directory:
 
 ```bash
-cd manual_app
+cd test_app
 bundle install
 ```
 
@@ -64,7 +64,7 @@ Add the following to your Claude Desktop configuration file:
     "rails-mcp-engine": {
       "command": "bundle",
       "args": ["exec", "bin/mcp_stdio"],
-      "cwd": "/absolute/path/to/rails_mcp_engine/manual_app",
+      "cwd": "/absolute/path/to/rails_mcp_engine/test_app",
       "env": {
         "RAILS_ENV": "development"
       }
@@ -73,7 +73,7 @@ Add the following to your Claude Desktop configuration file:
 }
 ```
 
-Replace `/absolute/path/to/rails_mcp_engine/manual_app` with the actual absolute path on your machine.
+Replace `/absolute/path/to/rails_mcp_engine/test_app` with the actual absolute path on your machine.
 
 ### 2. Restart Claude Desktop
 
