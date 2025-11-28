@@ -16,6 +16,6 @@ module ManualApp
     config.autoload_paths << Rails.root.join('lib')
 
     config.action_controller.include_all_helpers = false
-    config.hosts << 'uncommon-kangaroo-randomly.ngrok-free.app'
+    config.hosts << ENV['DEFAULT_DOMAIN'] if ENV['DEFAULT_DOMAIN'].present?
   end
 end
