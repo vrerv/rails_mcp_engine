@@ -13,6 +13,9 @@
       <div class="control-group">
         <span class="tools-count"><%= @tools.length %> tools available</span>
       </div>
+      <div class="control-group">
+        <button id="clear-chat-button" onclick="clearConversation()" class="clear-button">Clear Chat</button>
+      </div>
     </div>
   </div>
 
@@ -42,8 +45,24 @@
 <script>
 let conversationHistory = [];
 
-// Send on Enter (Shift+Enter for new line)
+// Load conversation history from localStorage on page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Restore conversation history
+  const savedHistory = localStorage.getItem('chat_conversation_history');
+  if (savedHistory) {
+    try {
+      conversationHistory = JSON.parse(savedHistory);
+      // Restore messages to UI
+      conversationHistory.forEach(msg => {
+        addMessageToUI(msg.role, msg.content);
+      });
+    } catch (e) {
+      console.error('Failed to load conversation history:', e);
+      conversationHistory = [];
+    }
+  }
+
+  // Send on Enter (Shift+Enter for new line)
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -89,6 +108,9 @@ function sendMessage() {
       addMessageToUI('error', data.error);
     } else {
       conversationHistory = data.conversation_history;
+      
+      // Save to localStorage
+      localStorage.setItem('chat_conversation_history', JSON.stringify(conversationHistory));
 
       // Display tool results if any
       if (data.tool_results && data.tool_results.length > 0) {
@@ -162,6 +184,18 @@ function addToolResultToUI(toolResult) {
   // Scroll to bottom
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+function clearConversation() {
+  if (confirm('Clear all conversation history?')) {
+    conversationHistory = [];
+    localStorage.removeItem('chat_conversation_history');
+    
+    // Clear UI - remove all messages except welcome message
+    const messagesContainer = document.getElementById('chat-messages');
+    const messages = messagesContainer.querySelectorAll('.message');
+    messages.forEach(msg => msg.remove());
+  }
+}
 </script>
 
 <style>
@@ -220,6 +254,22 @@ function addToolResultToUI(toolResult) {
   padding: 0.4rem 0.8rem;
   background: #eef2ff;
   border-radius: 6px;
+}
+
+.clear-button {
+  padding: 0.4rem 0.8rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clear-button:hover {
+  background: #dc2626;
 }
 
 .chat-messages {
