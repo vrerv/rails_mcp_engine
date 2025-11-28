@@ -23,7 +23,7 @@ jobs:
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
     - name: Run tests
-      run: bin/rails test
+      run: bundle exec bin/rails test
 
     - name: Run system tests
       run: bundle exec bin/rails test:system
