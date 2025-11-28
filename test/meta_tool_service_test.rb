@@ -12,7 +12,7 @@ class MetaToolServiceTest < Minitest::Test
 
   def test_registers_service_and_builds_wrappers
     ToolMeta.clear_registry
-    result = meta_service.call(action: 'register', class_name: 'Tools::SampleService', tool_name: nil, query: nil, arguments: nil)
+    result = meta_service.register_tool('Tools::SampleService')
 
     assert_equal 'registered', result[:status]
     assert_includes ToolMeta.registry, Tools::SampleService
@@ -26,22 +26,22 @@ class MetaToolServiceTest < Minitest::Test
   end
 
   def test_lists_and_searches_tools
-    list = meta_service.call(action: 'list', tool_name: nil, class_name: nil, query: nil, arguments: nil)
+    list = meta_service.call(action: 'list', tool_name: nil, query: nil, arguments: nil)
     assert_equal 'sample', list[:tools].first[:name]
 
-    summary = meta_service.call(action: 'list_summary', tool_name: nil, class_name: nil, query: nil, arguments: nil)
+    summary = meta_service.call(action: 'list_summary', tool_name: nil, query: nil, arguments: nil)
     assert_equal 'sample', summary[:tools].first[:name]
 
-    search = meta_service.call(action: 'search', query: 'hello', tool_name: nil, class_name: nil, arguments: nil)
+    search = meta_service.call(action: 'search', query: 'hello', tool_name: nil, arguments: nil)
     assert_equal 'sample', search[:tools].first[:name]
   end
 
   def test_get_and_run_tool
-    get_result = meta_service.call(action: 'get', tool_name: 'sample', class_name: nil, query: nil, arguments: nil)
+    get_result = meta_service.call(action: 'get', tool_name: 'sample', query: nil, arguments: nil)
     assert_equal 'sample', get_result[:tool][:name]
     refute_empty get_result[:tool][:params]
 
-    run_result = meta_service.call(action: 'run', tool_name: 'sample', class_name: nil, query: nil, arguments: { name: 'Ada' })
+    run_result = meta_service.call(action: 'run', tool_name: 'sample', query: nil, arguments: { name: 'Ada' })
     assert_equal 'Hello, Ada!', run_result[:result]
   end
 
@@ -57,7 +57,7 @@ class MetaToolServiceTest < Minitest::Test
       }
     }
 
-    run_result = meta_service.call(action: 'run', tool_name: 'nested', class_name: nil, query: nil, arguments: arguments)
+    run_result = meta_service.call(action: 'run', tool_name: 'nested', query: nil, arguments: arguments)
 
     assert_equal({ name: 'Ada', tags: ['friend'] }, run_result[:result])
   end

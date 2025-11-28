@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# This command will automatically be run when you run "rails" with Rails gems installed
+
+ENGINE_ROOT = File.expand_path('..', __dir__)
+APP_PATH = File.expand_path('../manual_app/config/application', __dir__)
+require File.expand_path('../manual_app/config/boot', __dir__)
+require 'rails/commands'
