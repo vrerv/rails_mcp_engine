@@ -44,8 +44,8 @@ module Tools
       end
     end
 
-    sig { params(class_name: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
-    def register_tool(class_name)
+    sig { params(class_name: T.nilable(String), before_call: T.nilable(Proc), after_call: T.nilable(Proc)).returns(T::Hash[Symbol, T.untyped]) }
+    def register_tool(class_name, before_call: nil, after_call: nil)
       return { error: 'class_name is required for register' } if class_name.nil? || class_name.empty?
 
       service_class = constantize(class_name)
@@ -55,8 +55,8 @@ module Tools
       ToolMeta.registry << service_class unless ToolMeta.registry.include?(service_class)
 
       schema = ToolSchema::Builder.build(service_class)
-      ToolSchema::RubyLlmFactory.build(service_class, schema)
-      ToolSchema::FastMcpFactory.build(service_class, schema)
+      ToolSchema::RubyLlmFactory.build(service_class, schema, before_call: before_call, after_call: after_call)
+      ToolSchema::FastMcpFactory.build(service_class, schema, before_call: before_call, after_call: after_call)
 
       { status: 'registered', tool: summary_payload(schema) }
     rescue ToolMeta::MissingSignatureError => e

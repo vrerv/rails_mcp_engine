@@ -63,6 +63,45 @@ class MetaToolServiceTest < Minitest::Test
     assert_equal({ name: 'Ada', tags: ['friend'] }, run_result[:result])
   end
 
+  def test_register_tool_with_hooks
+    ToolMeta.clear_registry
+
+    before_called = false
+    after_called = false
+
+    meta_service.register_tool(
+      'Tools::SampleService',
+      before_call: ->(_args) { before_called = true },
+      after_call: ->(_result) { after_called = true }
+    )
+
+    tool_class = Mcp::Sample
+    tool_class.new.call(name: 'Hooks')
+
+    assert before_called, 'Before hook should be called'
+    assert after_called, 'After hook should be called'
+  end
+
+  def test_register_tool_with_hooks_ruby_llm
+    ToolMeta.clear_registry
+
+    before_called = false
+    after_called = false
+
+    meta_service.register_tool(
+      'Tools::SampleService',
+      before_call: ->(_args) { before_called = true },
+      after_call: ->(_result) { after_called = true }
+    )
+
+    # RubyLLM wrapper
+    tool_class = Tools::Sample
+    tool_class.new.execute(name: 'RubyLLM Hooks')
+
+    assert before_called, 'Before hook should be called for RubyLLM tool'
+    assert after_called, 'After hook should be called for RubyLLM tool'
+  end
+
   private
 
   def meta_service
