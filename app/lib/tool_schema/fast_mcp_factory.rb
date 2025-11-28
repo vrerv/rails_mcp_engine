@@ -29,7 +29,7 @@ module ToolSchema
     sig { params(service_class: T.class_of(Object)).returns(String) }
     def self.tool_class_name(service_class)
       base = service_class.name.split('::').last
-      base.gsub(/Service$/, 'Tool')
+      base.gsub(/Service$/, '')
     end
   end
 end
