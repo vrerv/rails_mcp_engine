@@ -18,13 +18,6 @@ class ChatController < ApplicationController
     model = params[:model].to_s
     conversation_history = JSON.parse(params[:conversation_history] || '[]', symbolize_names: true)
 
-    # Get API key from environment variable
-    api_key = ENV.fetch('OPENAI_API_KEY', nil)
-    if api_key.blank?
-      render json: { error: 'OPENAI_API_KEY environment variable is not set' }, status: :bad_request
-      return
-    end
-
     if user_message.strip.empty?
       render json: { error: 'Message is required' }, status: :bad_request
       return
@@ -33,8 +26,7 @@ class ChatController < ApplicationController
     # Create RubyLLM chat instance with configuration
     chat = RubyLLM.chat(
       provider: :openai,
-      model: model,
-      api_key: api_key
+      model: model
     )
 
     # Register all available tools
