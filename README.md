@@ -52,6 +52,13 @@ On boot, the engine generates:
 4. Run the test suite locally with `ruby -Itest test/tool_schema_test.rb`.
 5. Invoke through RubyLLM or FastMCP as usual; both delegate to the original service entrypoint.
 
+### Manual playground app
+The repository includes a minimal Rails app under `manual_app/` for quick manual validation. It reuses the engine code via shared load paths and exposes a single UI for:
+- Pasting tool service source code that extends `ToolMeta` to register RubyLLM and FastMCP wrappers.
+- Invoking the generated RubyLLM wrapper with JSON arguments to see end-to-end behavior.
+
+See [`manual_app/README.md`](manual_app/README.md) for setup and usage instructions.
+
 ## Default meta tool
 `Tools::MetaToolService` is included by default to explore and execute registered tools at runtime. It exposes a single `action` argument with supporting keywords:
 

@@ -74,8 +74,8 @@ module ToolSchema
       {
         type: :object,
         children: [],
-        key_type: map_type(type.keys_type),
-        value_type: map_type(type.values_type)
+        key_type: map_type(type.keys),
+        value_type: map_type(type.values)
       }
     end
 
