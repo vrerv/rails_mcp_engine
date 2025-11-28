@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.version     = RailsMcpEngine::VERSION
   spec.authors     = ['Soonoh Jung']
   spec.email       = ['soonoh.jung@gmail.com']
-  spec.homepage    = 'https://github.com/soonoh/rails_mcp_engine'
+  spec.homepage    = 'https://github.com/sh1nj1/rails_mcp_engine'
   spec.summary     = 'Rails engine for MCP tools'
   spec.description = 'Unified tool definition pipeline for Rails 8 applications using FastMCP and RubyLLM.'
   spec.license     = 'MIT'

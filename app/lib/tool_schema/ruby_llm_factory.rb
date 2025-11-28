@@ -8,8 +8,15 @@ module ToolSchema
   class RubyLlmFactory
     extend T::Sig
 
-    sig { params(service_class: T.class_of(Object), schema: T::Hash[Symbol, T.untyped]).returns(T.class_of(Object)) }
-    def self.build(service_class, schema)
+    sig do
+      params(
+        service_class: T.class_of(Object),
+        schema: T::Hash[Symbol, T.untyped],
+        before_call: T.nilable(Proc),
+        after_call: T.nilable(Proc)
+      ).returns(T.class_of(Object))
+    end
+    def self.build(service_class, schema, before_call: nil, after_call: nil)
       tool_constant = tool_class_name(service_class)
       parent = Tools
       parent.send(:remove_const, tool_constant) if parent.const_defined?(tool_constant, false)
@@ -19,7 +26,10 @@ module ToolSchema
         params(&RubyLlmBuilder.params_block(schema[:params]))
 
         define_method(:execute) do |**kwargs|
-          service_class.new.public_send(schema[:entrypoint], **kwargs)
+          before_call&.call(kwargs)
+          result = service_class.new.public_send(schema[:entrypoint], **kwargs)
+          after_call&.call(result)
+          result
         end
       end
 

@@ -68,7 +68,11 @@ class ManualController < ApplicationController
 
   def register_source(source, class_name)
     Object.class_eval(source)
-    Tools::MetaToolService.new.register_tool(class_name)
+    Tools::MetaToolService.new.register_tool(
+      class_name,
+      before_call: ->(args) { Rails.logger.info("  [MCP] Request #{class_name}: #{args.inspect}") },
+      after_call: ->(result) { Rails.logger.info("  [MCP] Response #{class_name}: #{result.inspect}") }
+    )
   rescue StandardError => e
     { error: e.message }
   end
