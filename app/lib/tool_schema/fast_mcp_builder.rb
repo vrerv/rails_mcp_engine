@@ -20,36 +20,36 @@ module ToolSchema
     def self.build_param(ctx, param)
       wrapper = param[:required] ? ctx.required(param[:name]) : ctx.optional(param[:name])
 
-      case param[:type]
-      when :object
-        wrapper.hash do
-          nested_ctx = wrapper.respond_to?(:required) ? wrapper : ctx
-          (param[:children] || []).each do |child|
-            FastMcpBuilder.build_param(nested_ctx, child)
-          end
-        end
-      when :array
-        item = param[:item_type]
-        if item && scalar_type?(item[:type])
-          wrapper.array(scalar_symbol(item[:type]))
-        elsif item&.dig(:type) == :object
-          wrapper.array(:hash) do
-            nested_ctx = wrapper.respond_to?(:required) ? wrapper : ctx
-            (item[:children] || []).each do |child|
-              FastMcpBuilder.build_param(nested_ctx, child)
-            end
-          end
-        else
-          wrapper.array(:any)
-        end
-      else
-        wrapper.value(scalar_symbol(param[:type]))
-      end
+      node = case param[:type]
+             when :object
+               wrapper.hash do
+                 (param[:children] || []).each do |child|
+                   FastMcpBuilder.build_param(self, child)
+                 end
+               end
+             when :array
+               item = param[:item_type]
+               if item && scalar_type?(item[:type])
+                 wrapper.array(scalar_symbol(item[:type]))
+               elsif item&.dig(:type) == :object
+                 wrapper.array(:hash) do
+                   (item[:children] || []).each do |child|
+                     FastMcpBuilder.build_param(self, child)
+                   end
+                 end
+               else
+                 wrapper.array(:any)
+               end
+             else
+               wrapper.value(scalar_symbol(param[:type]))
+             end
+
+      node.description(param[:description]) if param[:description]
     end
 
     sig { params(type: T.untyped).returns(T::Boolean) }
     def self.scalar_type?(type)
-      [:string, :integer, :float, :boolean, :any].include?(type)
+      %i[string integer float boolean any].include?(type)
     end
 
     sig { params(type: T.untyped).returns(Symbol) }

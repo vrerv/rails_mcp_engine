@@ -16,5 +16,6 @@ module ManualApp
     config.autoload_paths << Rails.root.join('lib')
 
     config.action_controller.include_all_helpers = false
+    config.hosts << 'uncommon-kangaroo-randomly.ngrok-free.app'
   end
 end

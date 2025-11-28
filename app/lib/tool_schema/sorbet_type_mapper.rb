@@ -20,6 +20,10 @@ module ToolSchema
         map_param(name, type)
       end
 
+      signature.kwarg_types.each do |name, type|
+        params_ast << map_param(name, type)
+      end
+
       {
         params: params_ast,
         return_type: map_type(signature.return_type)
@@ -116,6 +120,7 @@ module ToolSchema
     sig { params(type: T.untyped).returns([T::Boolean, T.untyped]) }
     def self.unwrap_nilable(type)
       return [false, type] unless type.is_a?(T::Types::Union)
+
       nilable = type.types.any? { |t| t.is_a?(T::Types::Simple) && t.raw_type == NilClass }
       non_nil = type.types.reject { |t| t.is_a?(T::Types::Simple) && t.raw_type == NilClass }
       target = non_nil.length == 1 ? non_nil.first : type

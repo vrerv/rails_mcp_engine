@@ -47,3 +47,63 @@ end
 ### Notes
 - The playground evaluates arbitrary Ruby code; only run trusted tool source.
 - All engine code is shared via `config.autoload_paths` in `config/application.rb`, so changes to the engine are immediately reflected when reloading the app.
+
+## MCP Server Configuration
+
+You can connect this app to MCP clients like **Claude Desktop**.
+
+### 1. Claude Desktop Configuration
+
+Add the following to your Claude Desktop configuration file:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "rails-mcp-engine": {
+      "command": "bundle",
+      "args": ["exec", "bin/mcp_stdio"],
+      "cwd": "/absolute/path/to/rails_mcp_engine/manual_app",
+      "env": {
+        "RAILS_ENV": "development"
+      }
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/rails_mcp_engine/manual_app` with the actual absolute path on your machine.
+
+### 2. Restart Claude Desktop
+
+Restart Claude Desktop, and you should see the tools (e.g., `book_meeting`, `meta_tool`) available in the chat interface.
+
+## Remote / SSE Configuration
+
+To connect to this server as a "remote" server (e.g., via HTTP/SSE), you can use the SSE endpoint exposed by Rails.
+
+1.  **Start the Rails Server**:
+    ```bash
+    bundle exec rails server -p 4000
+    ```
+    The SSE endpoint will be available at `http://localhost:4000/mcp/sse`.
+
+2.  **Configure Claude Desktop**:
+    Since Claude Desktop config requires a local command, use the `server-sse-client` bridge to connect to the remote URL.
+
+    Add this to your `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "rails-mcp-remote": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-sse-client", "--url", "http://localhost:4000/mcp/sse"],
+          "env": {}
+        }
+      }
+    }
+    ```
+
+    This tells Claude to run a local Node.js client that proxies requests to your Rails SSE endpoint.

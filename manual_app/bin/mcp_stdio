@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+require_relative '../config/environment'
+require 'fast_mcp'
+
+# Create an MCP server
+server = FastMcp::Server.new(name: 'manual-app-mcp-server', version: '1.0.0')
+
+# Register tools
+# We need to make sure Rails has loaded everything
+Rails.application.eager_load!
+
+# Register all tools inheriting from ApplicationTool
+# Manually trigger generation since to_prepare might not run in script
+ToolMeta.registry.each do |service_class|
+  schema = ToolSchema::Builder.build(service_class)
+  ToolSchema::FastMcpFactory.build(service_class, schema)
+end
+
+server.register_tools(*ApplicationTool.descendants)
+
+# Start the server
+server.start
