@@ -140,11 +140,9 @@ module Tools
       "#{schema[:name]}(#{param_list})"
     end
 
-    sig { params(name: String).returns(T.nilable(T.class_of(Object))) }
+    sig { params(name: String).returns(T.class_of(Object)) }
     def constantize(name)
       Object.const_get(name)
-    rescue NameError
-      nil
     end
 
     sig { params(value: T.untyped).returns(T.untyped) }
