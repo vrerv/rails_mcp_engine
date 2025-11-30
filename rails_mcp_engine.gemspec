@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
 
   spec.add_dependency 'fast-mcp', '~> 1.6'
-  spec.add_dependency 'rails', '>= 7.1', '< 8.1'
+  spec.add_dependency 'rails', '>= 7.1', '< 8.2'
   spec.add_dependency 'ruby_llm', '~> 1.9'
   spec.add_dependency 'sorbet-runtime', '>= 0.5'
 end

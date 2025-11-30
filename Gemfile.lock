@@ -3,7 +3,7 @@ PATH
   specs:
     rails_mcp_engine (0.1.0)
       fast-mcp (~> 1.6)
-      rails (>= 7.1, < 8.1)
+      rails (>= 7.1, < 8.2)
       ruby_llm (~> 1.9)
       sorbet-runtime (>= 0.5)
 
