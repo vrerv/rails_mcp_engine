@@ -73,6 +73,23 @@ Example invocation from a console:
 Tools::MetaToolService.new.call(action: 'run', tool_name: 'book_meeting', arguments: { window: { start: '...', finish: '...' }, participants: ['a@example.com'] })
 ```
 
+## Tool Registration Hooks
+
+You can attach `before_call` and `after_call` hooks when manually registering tools. These hooks are useful for logging, tracing, or other side effects.
+
+```ruby
+Tools::MetaToolService.new.register_tool(
+  'Tools::BookMeetingService',
+  before_call: ->(args) { Rails.logger.info("Calling tool with #{args}") },
+  after_call: ->(result) { Rails.logger.info("Tool returned #{result}") }
+)
+```
+
+- `before_call`: A `Proc` that receives the arguments hash.
+- `after_call`: A `Proc` that receives the result.
+
+These hooks are executed around the tool's entrypoint method for both RubyLLM and FastMCP wrappers.
+
 ## Development
 
 After checking out the repo, run `bundle install` to install dependencies. Then, run `bundle exec rails test` to run the tests.
