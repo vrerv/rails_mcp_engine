@@ -4,6 +4,8 @@ require 'fast_mcp'
 
 module RailsMcpEngine
   class Engine < ::Rails::Engine
+    isolate_namespace RailsMcpEngine
+
     # Define the base class expected by the engine, inheriting from the real gem
     # This ensures ApplicationTool is available to the host app and the engine
     initializer 'rails_mcp_engine.define_base_class' do

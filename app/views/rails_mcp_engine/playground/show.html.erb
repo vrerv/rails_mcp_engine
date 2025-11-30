@@ -1,7 +1,7 @@
 <div class="card">
   <h2>1) Register a tool service</h2>
   <p>Paste a Ruby class that extends <code>ToolMeta</code> and has a Sorbet signature. The controller will evaluate it and register both RubyLLM and FastMCP tool wrappers.</p>
-  <%= form_with url: register_tool_path, method: :post do %>
+  <%= form_with url: playground_register_path, method: :post do %>
     <label for="source">Tool class source code</label><br>
     <%= text_area_tag :source, params[:source], placeholder: "class Tools::EchoService\n  extend T::Sig\n  extend ToolMeta\n\n  tool_description 'Echoes the provided payload'\n  tool_param :message, description: 'Message to return'\n\n  sig { params(message: String).returns(String) }\n  def call(message:)\n    message\n  end\nend" %>
     <div class="actions">
@@ -18,7 +18,7 @@
 <div class="card">
   <h2>2) Run a tool</h2>
   <p>Select a tool and provide JSON arguments to send through the generated RubyLLM wrapper.</p>
-  <%= form_with url: run_tool_path, method: :post do %>
+  <%= form_with url: playground_run_path, method: :post do %>
     <label for="tool_name">Tool name</label><br>
     <%= select_tag :tool_name, options_for_select(@tools.map { |schema| [schema[:name], schema[:name]] }, params[:tool_name]), prompt: 'Choose a tool' %>
     <br><br>
@@ -49,7 +49,7 @@
               <strong><%= tool[:description] %></strong>
               <span class="expand-icon" id="expand-icon-<%= index %>">▼</span>
             </div>
-            <%= button_to 'Delete', delete_tool_path(tool[:name]), 
+            <%= button_to 'Delete', playground_delete_tool_path(tool[:name]), 
                 method: :delete, 
                 class: 'delete-tool-btn',
                 data: { confirm: "Are you sure you want to delete '#{tool[:name]}'?" } %>
