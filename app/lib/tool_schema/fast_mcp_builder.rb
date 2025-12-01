@@ -58,7 +58,7 @@ module ToolSchema
       when :string then :string
       when :integer then :integer
       when :float then :float
-      when :boolean then :boolean
+      when :boolean then :bool
       else :any
       end
     end

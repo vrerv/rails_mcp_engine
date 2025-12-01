@@ -41,6 +41,10 @@ module ToolSchema
         else
           ctx.array(name)
         end
+      when :any
+        ctx.object(name, description: param[:description]) do
+          additional_properties true
+        end
       else
         method = scalar_method(param[:type])
         ctx.public_send(method, name)
@@ -49,7 +53,7 @@ module ToolSchema
 
     sig { params(type: T.untyped).returns(T::Boolean) }
     def self.scalar_type?(type)
-      [:string, :integer, :float, :boolean, :any].include?(type)
+      %i[string integer float boolean].include?(type)
     end
 
     sig { params(type: T.untyped).returns(Symbol) }
@@ -69,7 +73,6 @@ module ToolSchema
       when :integer then :integer
       when :float then :float
       when :boolean then :boolean
-      when :any then :any
       else :string
       end
     end

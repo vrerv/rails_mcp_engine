@@ -68,6 +68,66 @@ class ToolSchemaTest < Minitest::Test
     end
   end
 
+  def test_ruby_llm_builder_handles_any_type
+    params_ast = [
+      {
+        name: :payload,
+        required: true,
+        type: :any,
+        description: 'Any payload'
+      }
+    ]
+
+    params_proc = ToolSchema::RubyLlmBuilder.params_block(params_ast)
+
+    tool_class = Class.new(RubyLLM::Tool) do
+      params(&params_proc)
+    end
+
+    schema = tool_class.new.params_schema
+    payload_prop = schema['properties']['payload']
+
+    assert_equal 'object', payload_prop['type']
+    assert_equal true, payload_prop['additionalProperties']
+    assert_equal 'Any payload', payload_prop['description']
+  end
+
+  def test_sorbet_type_mapper_handles_boolean_union
+    service_class = Class.new do
+      extend T::Sig
+
+      sig { params(flag: T.nilable(T::Boolean)).returns(String) }
+      def call(flag: nil); end
+    end
+
+    method = service_class.instance_method(:call)
+    schema = ToolSchema::SorbetTypeMapper.map_signature(method)
+    param = schema[:params].find { |p| p[:name] == :flag }
+
+    assert_equal :boolean, param[:type]
+    assert_equal false, param[:required]
+  end
+
+  def test_fast_mcp_builder_handles_boolean
+    params_ast = [
+      {
+        name: :flag,
+        required: true,
+        type: :boolean,
+        description: 'A flag'
+      }
+    ]
+
+    arguments_proc = ToolSchema::FastMcpBuilder.arguments_block(params_ast)
+
+    # This should not raise Dry::Core::Container::KeyError
+    assert_silent do
+      Class.new(ApplicationTool) do
+        arguments(&arguments_proc)
+      end
+    end
+  end
+
   private
 
   def build_echo_service

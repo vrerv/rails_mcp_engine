@@ -60,6 +60,13 @@ module ToolSchema
     sig { params(type: T::Types::Union).returns(TypeAst) }
     def self.map_union(type)
       non_nil_types = type.types.reject { |t| t.is_a?(T::Types::Simple) && t.raw_type == NilClass }
+
+      # Check for Boolean (TrueClass | FalseClass)
+      is_boolean = non_nil_types.length == 2 && non_nil_types.all? do |t|
+        t.is_a?(T::Types::Simple) && [TrueClass, FalseClass].include?(t.raw_type)
+      end
+      return { type: :boolean } if is_boolean
+
       return { type: :any } if non_nil_types.length != 1
 
       map_type(non_nil_types.first).merge(required: true)
