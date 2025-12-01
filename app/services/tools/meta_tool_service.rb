@@ -65,6 +65,20 @@ module Tools
       { error: "Could not find #{class_name}: #{e.message}" }
     end
 
+    sig { params(tool_names: T::Array[String]).returns(T::Array[T.class_of(Object)]) }
+    def self.ruby_llm_tools(tool_names)
+      # Ensure tools are built/registered
+      RailsMcpEngine::Engine.build_tools!
+
+      ToolMeta.registry.filter_map do |service_class|
+        schema = ToolSchema::Builder.build(service_class)
+        next unless tool_names.include?(schema[:name])
+
+        tool_class_name = ToolSchema::RubyLlmFactory.tool_class_name(service_class)
+        Tools.const_get(tool_class_name) if Tools.const_defined?(tool_class_name)
+      end
+    end
+
     private
 
     sig { params(query: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }

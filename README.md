@@ -99,6 +99,23 @@ Tools::MetaToolService.new.register_tool(
 
 These hooks are executed around the tool's entrypoint method for both RubyLLM and FastMCP wrappers.
 
+## Using Tools in Host Application
+
+You can easily fetch the generated RubyLLM tool classes for use in your host application (e.g., when calling an LLM API):
+
+```ruby
+# Fetch specific tool classes by name
+tool_classes = Tools::MetaToolService.ruby_llm_tools(['book_meeting', 'calculator'])
+
+# Use them with RubyLLM
+response = RubyLLM.chat(
+  messages: messages,
+  tools: tool_classes,
+  model: 'gpt-4o'
+)
+```
+
+
 ## Development
 
 After checking out the repo, run `bundle install` to install dependencies. Then, run `bundle exec rails test` to run the tests.
