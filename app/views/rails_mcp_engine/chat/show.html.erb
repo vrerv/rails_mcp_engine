@@ -62,6 +62,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Restore selected model
+  const savedModel = localStorage.getItem('chat_selected_model');
+  if (savedModel) {
+    const modelSelect = document.getElementById('model-select');
+    if (modelSelect) {
+      modelSelect.value = savedModel;
+    }
+  }
+
+  // Save model selection on change
+  const modelSelect = document.getElementById('model-select');
+  if (modelSelect) {
+    modelSelect.addEventListener('change', (e) => {
+      localStorage.setItem('chat_selected_model', e.target.value);
+    });
+  }
+
   // Send on Enter (Shift+Enter for new line)
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
