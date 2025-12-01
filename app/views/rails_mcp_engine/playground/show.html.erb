@@ -1,39 +1,3 @@
-<div class="card">
-  <h2>1) Register a tool service</h2>
-  <p>Paste a Ruby class that extends <code>ToolMeta</code> and has a Sorbet signature. The controller will evaluate it and register both RubyLLM and FastMCP tool wrappers.</p>
-  <%= form_with url: playground_register_path, method: :post do %>
-    <label for="source">Tool class source code</label><br>
-    <%= text_area_tag :source, params[:source], placeholder: "class Tools::EchoService\n  extend T::Sig\n  extend ToolMeta\n\n  tool_description 'Echoes the provided payload'\n  tool_param :message, description: 'Message to return'\n\n  sig { params(message: String).returns(String) }\n  def call(message:)\n    message\n  end\nend" %>
-    <div class="actions">
-      <%= submit_tag 'Register tool' %>
-    </div>
-  <% end %>
-
-  <% if @register_result.present? %>
-    <h3>Registration response</h3>
-    <pre><%= JSON.pretty_generate(@register_result) %></pre>
-  <% end %>
-</div>
-
-<div class="card">
-  <h2>2) Run a tool</h2>
-  <p>Select a tool and provide JSON arguments to send through the generated RubyLLM wrapper.</p>
-  <%= form_with url: playground_run_path, method: :post do %>
-    <label for="tool_name">Tool name</label><br>
-    <%= select_tag :tool_name, options_for_select(@tools.map { |schema| [schema[:name], schema[:name]] }, params[:tool_name]), prompt: 'Choose a tool' %>
-    <br><br>
-    <label for="arguments">Arguments (JSON)</label><br>
-    <%= text_area_tag :arguments, params[:arguments], placeholder: '{"message": "Hello"}' %>
-    <div class="actions">
-      <%= submit_tag 'Run tool' %>
-    </div>
-  <% end %>
-
-  <% if @test_result.present? %>
-    <h3>Execution response</h3>
-    <pre><%= JSON.pretty_generate(@test_result) %></pre>
-  <% end %>
-</div>
 
 <div class="card">
   <h2>Registered tools</h2>
@@ -118,6 +82,43 @@
         </li>
       <% end %>
     </ul>
+  <% end %>
+</div>
+
+<div class="card">
+  <h2>Register a tool service</h2>
+  <p>Paste a Ruby class that extends <code>ToolMeta</code> and has a Sorbet signature. The controller will evaluate it and register both RubyLLM and FastMCP tool wrappers.</p>
+  <%= form_with url: playground_register_path, method: :post do %>
+    <label for="source">Tool class source code</label><br>
+    <%= text_area_tag :source, params[:source], placeholder: "class Tools::EchoService\n  extend T::Sig\n  extend ToolMeta\n\n  tool_description 'Echoes the provided payload'\n  tool_param :message, description: 'Message to return'\n\n  sig { params(message: String).returns(String) }\n  def call(message:)\n    message\n  end\nend" %>
+    <div class="actions">
+      <%= submit_tag 'Register tool' %>
+    </div>
+  <% end %>
+
+  <% if @register_result.present? %>
+    <h3>Registration response</h3>
+    <pre><%= JSON.pretty_generate(@register_result) %></pre>
+  <% end %>
+</div>
+
+<div class="card">
+  <h2>Run a tool</h2>
+  <p>Select a tool and provide JSON arguments to send through the generated RubyLLM wrapper.</p>
+  <%= form_with url: playground_run_path, method: :post do %>
+    <label for="tool_name">Tool name</label><br>
+    <%= select_tag :tool_name, options_for_select(@tools.map { |schema| [schema[:name], schema[:name]] }, params[:tool_name]), prompt: 'Choose a tool' %>
+    <br><br>
+    <label for="arguments">Arguments (JSON)</label><br>
+    <%= text_area_tag :arguments, params[:arguments], placeholder: '{"message": "Hello"}' %>
+    <div class="actions">
+      <%= submit_tag 'Run tool' %>
+    </div>
+  <% end %>
+
+  <% if @test_result.present? %>
+    <h3>Execution response</h3>
+    <pre><%= JSON.pretty_generate(@test_result) %></pre>
   <% end %>
 </div>
 
