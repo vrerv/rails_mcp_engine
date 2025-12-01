@@ -67,9 +67,6 @@ module Tools
 
     sig { params(tool_names: T::Array[String]).returns(T::Array[T.class_of(Object)]) }
     def self.ruby_llm_tools(tool_names)
-      # Ensure tools are built/registered
-      RailsMcpEngine::Engine.build_tools!
-
       ToolMeta.registry.filter_map do |service_class|
         schema = ToolSchema::Builder.build(service_class)
         next unless tool_names.include?(schema[:name])
