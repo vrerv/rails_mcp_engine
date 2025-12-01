@@ -123,6 +123,12 @@ The chat interface allows you to:
 - Automatically invoke registered tools during the conversation.
 - View tool calls and results within the chat history.
 
+Screenshots:
+
+| Playground | Chat |
+| --- | --- | 
+| ![Playground](docs/rails_gem_engine_screenshot_tools.png) | ![Chat](docs/rails_gem_engine_screenshot_chat.png) |
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
