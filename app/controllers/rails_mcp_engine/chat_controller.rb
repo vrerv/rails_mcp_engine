@@ -7,10 +7,19 @@ module RailsMcpEngine
     def show
       @tools = schemas
       @models = [
+        # OpenAI
+        'gpt-5-nano',
+        'gpt-4.1',
         'gpt-4o',
         'gpt-4o-mini',
-        'gpt-4-turbo',
-        'gpt-3.5-turbo'
+        # Google
+        'gemini-2.5-pro',
+        'gemini-2.0-pro-exp',
+        # Anthropic
+        'claude-sonnet-4-5',
+        'claude-3-7-sonnet-20250219',
+        'claude-3-5-haiku-20241022',
+        'claude-3-haiku-20240307'
       ]
     end
 
@@ -24,9 +33,17 @@ module RailsMcpEngine
         return
       end
 
+      provider = if model.start_with?('gemini')
+                   :gemini
+                 elsif model.start_with?('claude')
+                   :anthropic
+                 else
+                   :openai
+                 end
+
       # Create RubyLLM chat instance with configuration
       chat = RubyLLM.chat(
-        provider: :openai,
+        provider: provider,
         model: model
       )
 
