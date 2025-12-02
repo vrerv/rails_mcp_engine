@@ -50,7 +50,7 @@ module RailsMcpEngine
       result = if schema.nil?
                  { error: "Tool not found: #{tool_name}" }
                else
-                 delete_tool_from_registry(schema[:service_class])
+                 delete_tool_from_registry(tool_name)
                end
 
       flash[:register_result] = result
@@ -139,8 +139,9 @@ module RailsMcpEngine
       # The engine.rb defines ApplicationTool.
 
       # Re-using the logic from ManualController but adapting for Engine.
-      ::Tools::MetaToolService.new.register_tool(
+      ::Tools::MetaToolWriteService.new.register_tool(
         class_name,
+        source: source,
         before_call: ->(args) { Rails.logger.info("  [MCP] Request #{class_name}: #{args.inspect}") },
         after_call: ->(result) { Rails.logger.info("  [MCP] Response #{class_name}: #{result.inspect}") }
       )
@@ -168,14 +169,8 @@ module RailsMcpEngine
       { error: e.message }
     end
 
-    def delete_tool_from_registry(service_class)
-      ToolMeta.registry.delete(service_class)
-
-      # Also remove the RubyLLM tool class constant
-      tool_constant = ToolSchema::RubyLlmFactory.tool_class_name(service_class)
-      ::Tools.send(:remove_const, tool_constant) if ::Tools.const_defined?(tool_constant, false)
-
-      { success: 'Tool deleted successfully' }
+    def delete_tool_from_registry(tool_name)
+      ::Tools::MetaToolWriteService.new.delete_tool(tool_name)
     rescue StandardError => e
       { error: e.message }
     end

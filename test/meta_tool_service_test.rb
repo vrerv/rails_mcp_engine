@@ -2,6 +2,7 @@
 
 require 'test_helper'
 require 'tools/meta_tool_service'
+require 'tools/meta_tool_write_service'
 
 class MetaToolServiceTest < Minitest::Test
   def setup
@@ -12,7 +13,7 @@ class MetaToolServiceTest < Minitest::Test
 
   def test_registers_service_and_builds_wrappers
     ToolMeta.clear_registry
-    result = meta_service.register_tool('Tools::SampleService')
+    result = write_service.register_tool('Tools::SampleService')
 
     assert_equal 'registered', result[:status]
     assert_includes ToolMeta.registry, Tools::SampleService
@@ -69,7 +70,7 @@ class MetaToolServiceTest < Minitest::Test
     before_called = false
     after_called = false
 
-    meta_service.register_tool(
+    write_service.register_tool(
       'Tools::SampleService',
       before_call: ->(_args) { before_called = true },
       after_call: ->(_result) { after_called = true }
@@ -88,7 +89,7 @@ class MetaToolServiceTest < Minitest::Test
     before_called = false
     after_called = false
 
-    meta_service.register_tool(
+    write_service.register_tool(
       'Tools::SampleService',
       before_call: ->(_args) { before_called = true },
       after_call: ->(_result) { after_called = true }
@@ -104,7 +105,7 @@ class MetaToolServiceTest < Minitest::Test
 
   def test_ruby_llm_tools_returns_correct_tool_classes
     # Register a tool first
-    meta_service.register_tool('Tools::SampleService')
+    write_service.register_tool('Tools::SampleService')
 
     tools = Tools::MetaToolService.ruby_llm_tools(['sample'])
     assert_equal 1, tools.size
@@ -120,7 +121,7 @@ class MetaToolServiceTest < Minitest::Test
     ToolMeta.clear_registry
     before_called = false
 
-    meta_service.register_tool(
+    write_service.register_tool(
       'Tools::SampleService',
       before_call: ->(_args) { before_called = true }
     )
@@ -139,6 +140,10 @@ class MetaToolServiceTest < Minitest::Test
 
   def meta_service
     Tools::MetaToolService.new
+  end
+
+  def write_service
+    Tools::MetaToolWriteService.new
   end
 
   def build_sample_service

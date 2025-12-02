@@ -44,26 +44,7 @@ module Tools
       end
     end
 
-    sig { params(class_name: T.nilable(String), before_call: T.nilable(Proc), after_call: T.nilable(Proc)).returns(T::Hash[Symbol, T.untyped]) }
-    def register_tool(class_name, before_call: nil, after_call: nil)
-      return { error: 'class_name is required for register' } if class_name.nil? || class_name.empty?
 
-      service_class = constantize(class_name)
-      return { error: "Could not find #{class_name}" } if service_class.nil?
-      return { error: "#{class_name} must extend ToolMeta" } unless service_class.respond_to?(:tool_metadata)
-
-      ToolMeta.registry << service_class unless ToolMeta.registry.include?(service_class)
-
-      schema = ToolSchema::Builder.build(service_class)
-      ToolSchema::RubyLlmFactory.build(service_class, schema, before_call: before_call, after_call: after_call)
-      ToolSchema::FastMcpFactory.build(service_class, schema, before_call: before_call, after_call: after_call)
-
-      { status: 'registered', tool: summary_payload(schema) }
-    rescue ToolMeta::MissingSignatureError => e
-      { error: e.message }
-    rescue NameError => e
-      { error: "Could not find #{class_name}: #{e.message}" }
-    end
 
     sig { params(tool_names: T::Array[String]).returns(T::Array[T.class_of(Object)]) }
     def self.ruby_llm_tools(tool_names)
@@ -76,7 +57,6 @@ module Tools
       end
     end
 
-    private
 
     sig { params(query: T.nilable(String)).returns(T::Hash[Symbol, T.untyped]) }
     def search_tools(query)
