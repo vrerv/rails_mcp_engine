@@ -133,11 +133,6 @@ module Tools
       "#{schema[:name]}(#{param_list})"
     end
 
-    sig { params(name: String).returns(T.class_of(Object)) }
-    def constantize(name)
-      Object.const_get(name)
-    end
-
     sig { params(value: T.untyped).returns(T.untyped) }
     def deep_symbolize(value)
       case value

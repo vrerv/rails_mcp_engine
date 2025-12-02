@@ -11,25 +11,12 @@ module Tools
   class MetaToolWriteService
     extend T::Sig
 
-    sig { params(class_name: T.nilable(String), source: T.nilable(String), before_call: T.nilable(Proc), after_call: T.nilable(Proc)).returns(T::Hash[Symbol, T.untyped]) }
-    def register_tool(class_name, source: nil, before_call: nil, after_call: nil)
+    sig { params(class_name: T.nilable(String), before_call: T.nilable(Proc), after_call: T.nilable(Proc)).returns(T::Hash[Symbol, T.untyped]) }
+    def register_tool(class_name, before_call: nil, after_call: nil)
       return { error: 'class_name is required for register' } if class_name.nil? || class_name.empty?
 
-      # If source is provided, evaluate it first
-      if source
-        begin
-          Object.class_eval(source)
-        rescue StandardError => e
-          return { error: "Failed to evaluate source: #{e.message}" }
-        end
-      end
-
-      begin
-        service_class = meta_service.constantize(class_name)
-      rescue NameError
-        return { error: "Could not find #{class_name}" }
-      end
-      
+      service_class = constantize(class_name)
+      return { error: "Could not find #{class_name}" } if service_class.nil?
       return { error: "#{class_name} must extend ToolMeta" } unless service_class.respond_to?(:tool_metadata)
 
       ToolMeta.registry << service_class unless ToolMeta.registry.include?(service_class)
@@ -43,6 +30,23 @@ module Tools
       { error: e.message }
     rescue NameError => e
       { error: "Could not find #{class_name}: #{e.message}" }
+    end
+
+    sig { params(source: T.nilable(String), before_call: T.nilable(Proc), after_call: T.nilable(Proc)).returns(T::Hash[Symbol, T.untyped]) }
+    def register_tool_from_source(source: nil, before_call: nil, after_call: nil)
+      class_name = extract_class_name(source)
+      return { error: 'class_name is required for register' } if class_name.nil? || class_name.empty?
+
+      # If source is provided, evaluate it first
+      if source
+        begin
+          Object.class_eval(source)
+        rescue StandardError => e
+          return { error: "Failed to evaluate source: #{e.message}" }
+        end
+      end
+
+      register_tool(class_name, before_call: before_call, after_call: after_call)
     end
 
     sig { params(tool_name: String).returns(T::Hash[Symbol, T.untyped]) }
@@ -67,6 +71,73 @@ module Tools
 
     def meta_service
       @meta_service ||= Tools::MetaToolService.new
+    end
+
+    def extract_class_name(source)
+      require 'ripper'
+      sexp = Ripper.sexp(source)
+      return nil unless sexp
+
+      # sexp is [:program, statements]
+      statements = sexp[1]
+      find_class(statements, [])
+    end
+
+    def find_class(statements, namespace)
+      return nil unless statements.is_a?(Array)
+
+      statements.each do |stmt|
+        next unless stmt.is_a?(Array)
+
+        case stmt.first
+        when :module
+          # [:module, const_ref, body]
+          # body is [:bodystmt, statements, ...]
+          const_node = stmt[1]
+          const_name = get_const_name(const_node)
+
+          body_stmt = stmt[2]
+          inner_statements = body_stmt[1]
+
+          result = find_class(inner_statements, namespace + [const_name])
+          return result if result
+        when :class
+          # [:class, const_ref, superclass, body]
+          const_node = stmt[1]
+          const_name = get_const_name(const_node)
+
+          return (namespace + [const_name]).join('::')
+        end
+      end
+      nil
+    end
+
+    def get_const_name(node)
+      return nil unless node.is_a?(Array)
+
+      type = node.first
+      if type == :const_ref
+        # [:const_ref, [:@const, "Name", ...]]
+        node[1][1]
+      elsif type == :const_path_ref
+        # [:const_path_ref, parent, child]
+        parent = node[1]
+        child = node[2] # [:@const, "Name", ...]
+
+        parent_name = if parent.first == :var_ref
+                        parent[1][1]
+                      else
+                        get_const_name(parent)
+                      end
+
+        "#{parent_name}::#{child[1]}"
+      else
+        nil
+      end
+    end
+
+    def constantize(name)
+      Object.const_get(name)
     end
   end
 end

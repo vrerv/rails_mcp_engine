@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    rails_mcp_engine (0.2.0)
+    rails_mcp_engine (0.4.0)
       fast-mcp (~> 1.6)
       rails (>= 7.1, < 8.2)
       ruby_llm (~> 1.9)
