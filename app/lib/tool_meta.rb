@@ -21,6 +21,7 @@ module ToolMeta
     base.instance_variable_set(:@tool_params, T.let([], T::Array[ParamMetadata]))
     base.instance_variable_set(:@tool_name, nil)
     base.instance_variable_set(:@tool_description, nil)
+    base.instance_variable_set(:@tool_type, nil)
   end
 
   sig { returns(T::Array[T.class_of(Object)]) }
@@ -41,6 +42,11 @@ module ToolMeta
   sig { params(description: String).void }
   def tool_description(description)
     @tool_description = description
+  end
+
+  sig { params(type: Symbol).void }
+  def tool_type(type)
+    @tool_type = type
   end
 
   sig do
@@ -72,6 +78,7 @@ module ToolMeta
     {
       name: @tool_name || default_tool_name,
       description: @tool_description || '',
+      type: @tool_type || :write,
       params: @tool_params,
       entrypoint: tool_entrypoint
     }

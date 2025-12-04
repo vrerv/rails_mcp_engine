@@ -27,6 +27,7 @@ module ToolSchema
       {
         name: metadata[:name],
         description: metadata[:description],
+        type: metadata[:type],
         params: params_ast,
         return_type: type_info[:return_type],
         entrypoint: entrypoint,

@@ -136,6 +136,25 @@ class MetaToolServiceTest < Minitest::Test
     assert before_called, 'Before hook should be preserved when fetching via ruby_llm_tools'
   end
 
+  def test_tool_type_metadata
+    Tools.const_set(:ReadService, Class.new do
+      extend T::Sig
+      extend ToolMeta
+
+      tool_name 'read_stuff'
+      tool_description 'Read some stuff'
+      tool_type :read
+
+      sig { void }
+      def call; end
+    end)
+
+    schema = ToolSchema::Builder.build(Tools::ReadService)
+    assert_equal :read, schema[:type]
+
+    Tools.send(:remove_const, :ReadService)
+  end
+
   private
 
   def meta_service

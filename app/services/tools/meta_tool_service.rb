@@ -118,6 +118,7 @@ module Tools
       {
         name: schema[:name],
         description: schema[:description],
+        type: schema[:type],
         usage: usage_string(schema)
       }
     end
