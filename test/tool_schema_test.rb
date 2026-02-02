@@ -128,6 +128,41 @@ class ToolSchemaTest < Minitest::Test
     end
   end
 
+  def test_ruby_llm_builder_handles_float_type
+    params_ast = [
+      {
+        name: :progress,
+        required: false,
+        type: :float,
+        description: 'Progress percentage'
+      }
+    ]
+
+    params_proc = ToolSchema::RubyLlmBuilder.params_block(params_ast)
+
+    # This should not raise "undefined method 'float'" error
+    # RubyLLM uses `number` not `float`
+    tool_class = Class.new(RubyLLM::Tool) do
+      params(&params_proc)
+    end
+
+    schema = tool_class.new.params_schema
+    progress_prop = schema['properties']['progress']
+
+    assert_equal 'number', progress_prop['type']
+  end
+
+  def test_ruby_llm_builder_float_type_methods
+    # Verify scalar_method and scalar_symbol return :number for :float
+    assert_equal :number, ToolSchema::RubyLlmBuilder.scalar_method(:float)
+    assert_equal :number, ToolSchema::RubyLlmBuilder.scalar_symbol(:float)
+
+    # Other types should remain unchanged
+    assert_equal :integer, ToolSchema::RubyLlmBuilder.scalar_method(:integer)
+    assert_equal :boolean, ToolSchema::RubyLlmBuilder.scalar_method(:boolean)
+    assert_equal :string, ToolSchema::RubyLlmBuilder.scalar_method(:string)
+  end
+
   private
 
   def build_echo_service
