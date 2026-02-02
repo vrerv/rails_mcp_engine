@@ -61,7 +61,7 @@ module ToolSchema
       case type
       when :string then :string
       when :integer then :integer
-      when :float then :float
+      when :float then :number  # RubyLLM uses `number` not `float`
       when :boolean then :boolean
       else :any
       end
@@ -71,7 +71,7 @@ module ToolSchema
     def self.scalar_method(type)
       case type
       when :integer then :integer
-      when :float then :float
+      when :float then :number  # RubyLLM uses `number` not `float`
       when :boolean then :boolean
       else :string
       end
