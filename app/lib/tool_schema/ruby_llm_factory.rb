@@ -21,9 +21,14 @@ module ToolSchema
       parent = Tools
       parent.send(:remove_const, tool_constant) if parent.const_defined?(tool_constant, false)
 
+      tool_name = T.let(schema[:name], String)
       klass = Class.new(RubyLLM::Tool) do
         description(schema[:description])
         params(&RubyLlmBuilder.params_block(schema[:params]))
+
+        # Override RubyLLM::Tool#name to use the tool_name from ToolMeta
+        # instead of the auto-generated name from the Ruby class name.
+        define_method(:name) { tool_name }
 
         define_method(:execute) do |**kwargs|
           before_call&.call(kwargs)
