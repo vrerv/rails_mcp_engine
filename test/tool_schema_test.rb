@@ -46,6 +46,17 @@ class ToolSchemaTest < Minitest::Test
     assert_equal 'hi hi', mcp_result
   end
 
+  def test_ruby_llm_tool_uses_tool_name_from_tool_meta
+    service_class = build_echo_service
+    schema = ToolSchema::Builder.build(service_class)
+
+    ruby_tool_class = ToolSchema::RubyLlmFactory.build(service_class, schema)
+    tool_instance = ruby_tool_class.new
+
+    # Should use the tool_name from ToolMeta ("echo"), not the Ruby class name
+    assert_equal 'echo', tool_instance.name
+  end
+
   def test_fast_mcp_builder_handles_nested_object_params
     params_ast = [
       {
