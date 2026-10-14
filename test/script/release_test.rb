@@ -98,6 +98,90 @@ class ReleaseScriptTest < Minitest::Test
     end
   end
 
+  def with_release_history
+    Dir.chdir(@dir) do
+      git!('init')
+      git!('config', 'user.name', 'Test')
+      git!('config', 'user.email', 'test@example.com')
+      version_file = File.join(@dir, 'version.rb')
+      File.write(version_file, "VERSION = '0.4.2'\n")
+      git!('add', '.')
+      git!('commit', '-m', 'released 0.4.2')
+      baseline = Open3.capture2('git', 'rev-parse', 'HEAD').first.strip
+      File.write(File.join(@dir, 'feature.rb'), '# feature before version change\n')
+      git!('add', '.')
+      git!('commit', '-m', 'feature before version change')
+      File.write(version_file, "VERSION = '0.4.3'\n")
+      git!('commit', '-am', 'version change without release')
+      File.write(File.join(@dir, 'feature.rb'), '# latest feature\n')
+      git!('commit', '-am', 'latest feature')
+      yield baseline, version_file
+    end
+  end
+
+  def test_explicit_release_commit_includes_changes_before_version_edit
+    with_release_history do |baseline, version_file|
+      release = Release.new(['--last-release-commit', baseline[0, 8]])
+      release.send(:validate_last_release_commit)
+      commits = release.send(:changes_since_last_release, @dir, version_file)
+      assert_equal 3, commits.size
+      assert commits.any? { |c| c.include?('feature before version change') }
+      assert commits.any? { |c| c.include?('version change without release') }
+      refute commits.any? { |c| c.include?('released 0.4.2') }
+      release.send(:update_release_notes, 'rails_mcp_engine', @dir, '0.4.4', commits)
+      assert_includes File.read(File.join(@dir, 'RELEASE_NOTES.md')), 'feature before version change'
+    end
+  end
+
+  def test_no_option_keeps_last_version_change_baseline
+    with_release_history do |_, version_file|
+      commits = Release.new.send(:changes_since_last_release, @dir, version_file)
+      assert_equal 1, commits.size
+      assert_includes commits.first, 'latest feature'
+    end
+  end
+
+  def test_head_baseline_has_no_changes
+    with_release_history do |_, version_file|
+      sha = Open3.capture2('git', 'rev-parse', 'HEAD').first.strip
+      release = Release.new(['--last-release-commit', sha])
+      release.send(:validate_last_release_commit)
+      assert_empty release.send(:changes_since_last_release, @dir, version_file)
+    end
+  end
+
+  def test_invalid_or_unrelated_release_commit_is_rejected
+    with_release_history do |_, _|
+      ['HEAD', '--all', '0' * 40].each do |sha|
+        release = Release.new(['--last-release-commit', sha])
+        capture_io { assert_raises(SystemExit) { release.send(:validate_last_release_commit) } }
+      end
+      tree = Open3.capture2('git', 'rev-parse', 'HEAD^{tree}').first.strip
+      capture_io do
+        assert_raises(SystemExit) { Release.new(['--last-release-commit', tree]).send(:validate_last_release_commit) }
+      end
+      branch = Open3.capture2('git', 'branch', '--show-current').first.strip
+      git!('checkout', '--orphan', 'unrelated')
+      git!('commit', '-m', 'unrelated history')
+      sha = Open3.capture2('git', 'rev-parse', 'HEAD').first.strip
+      git!('checkout', branch)
+      release = Release.new(['--last-release-commit', sha])
+      output, error = capture_io { assert_raises(SystemExit) { release.send(:validate_last_release_commit) } }
+      assert_includes output + error, 'must be an ancestor of HEAD'
+    end
+  end
+
+  def test_option_errors_and_help
+    [ ['--last-release-commit'], ['--unknown'], ['unexpected'] ].each do |args|
+      capture_io { assert_raises(SystemExit) { Release.new(args) } }
+    end
+    output, = capture_io do
+      exit_status = assert_raises(SystemExit) { Release.new(['--help']) }
+      assert_equal 0, exit_status.status
+    end
+    assert_includes output, '--last-release-commit SHA'
+  end
+
   def git!(*args)
     output, status = Open3.capture2e('git', *args)
     assert status.success?, output

@@ -123,6 +123,14 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 
 Run it from a clean `main` checkout with Ruby 3.2+, Bundler, Git push access, and RubyGems credentials (`gem signin`, including MFA when prompted). It pulls `main` with fast-forward only, shows commits since the last version change, and prompts for a higher `MAJOR.MINOR.PATCH` version (default: next patch).
 
+To use a known release commit instead of the last version-file change:
+
+```sh
+ruby script/release.rb --last-release-commit <SHA>
+```
+
+The full or abbreviated commit SHA must exist locally and be an ancestor of the updated `HEAD`. Changes after that commit (excluding the commit itself) are shown and used in release notes. Invalid, ambiguous, or unrelated commits stop the script before version input or file changes. Omit the option to keep the existing last-version-change behavior. Use `--help` to see available options.
+
 The script creates a release branch, updates the version, `RELEASE_NOTES.md`, and lockfile, runs Rails unit and system tests, commits those files, builds into `build/gems`, and publishes to RubyGems. It then fast-forwards `main`, pushes it, and pushes only the new `vVERSION` tag. System tests require Chrome/Chromium, as in CI.
 
 Dependency or test failures restore the original files and return to `main`, keeping the release branch for diagnosis. Failures after the commit leave the commit and build available. If upload fails, retry the printed `gem push` command; after a successful upload, finish the Git steps manually if necessary. RubyGems publication cannot be undone by Git rollback; do not rerun the whole script after a successful upload.
