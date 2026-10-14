@@ -6,7 +6,7 @@ Rails MCP Engine provides a unified tool-definition pipeline for Rails 8 applica
 
 This engine is built on top of these powerful libraries:
 
-- **[RubyLLM](https://github.com/crmne/ruby_llm)**: For generating LLM-compatible tool definitions.
+- **[RubyLLM](https://github.com/crmne/ruby_llm)**: For generating LLM-compatible tool definitions. Supports versions `>= 1.9, < 3` (1.x and 2.x).
 - **[FastMCP](https://github.com/yjacquin/fast-mcp)**: For creating Model Context Protocol (MCP) servers.
 - **[Sorbet](https://github.com/sorbet/sorbet)**: For static type checking and signature definitions.
 
@@ -61,7 +61,7 @@ end
 ```
 
 On boot, the engine generates:
-- `Tools::BookMeeting < RubyLLM::Tool` with a matching `params` block.
+- `Tools::BookMeeting < RubyLLM::Tool` with a matching `params` block on RubyLLM 1.x or `parameters` block on 2.x.
 - `Mcp::BookMeetingTool < ApplicationTool` with a matching `arguments` block.
 
 ## Default meta tool
@@ -108,11 +108,8 @@ You can easily fetch the generated RubyLLM tool classes for use in your host app
 tool_classes = Tools::MetaToolService.ruby_llm_tools(['book_meeting', 'calculator'])
 
 # Use them with RubyLLM
-response = RubyLLM.chat(
-  messages: messages,
-  tools: tool_classes,
-  model: 'gpt-4o'
-)
+chat = RubyLLM.chat(model: 'gpt-4o').with_tools(*tool_classes)
+response = chat.ask('Book a meeting with the team.')
 ```
 
 
