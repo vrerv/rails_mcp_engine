@@ -27,6 +27,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'fast-mcp', '~> 1.6'
   spec.add_dependency 'rails', '>= 7.1', '< 8.2'
-  spec.add_dependency 'ruby_llm', '~> 1.9'
+  spec.add_dependency 'ruby_llm', '>= 1.9', '< 3'
   spec.add_dependency 'sorbet-runtime', '>= 0.5'
 end

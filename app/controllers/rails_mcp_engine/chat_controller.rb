@@ -49,7 +49,7 @@ module RailsMcpEngine
 
       # Register all available tools
       tool_classes = get_tool_classes
-      chat = tool_classes.reduce(chat) { |c, tool_class| c.with_tool(tool_class) }
+      chat = tool_classes.reduce(chat) { |c, tool_class| c.with_tools(tool_class) }
 
       # Prepare the message with conversation history context
       if conversation_history.empty?
