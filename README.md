@@ -117,7 +117,17 @@ response = chat.ask('Book a meeting with the team.')
 
 After checking out the repo, run `bundle install` to install dependencies. Then, run `bundle exec rails test` to run the tests.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+### Gem release
+
+`ruby script/release.rb` adapts [Collavre's release script](https://github.com/sh1nj1/plan42/blob/main/script/release.rb) for this single gem repository.
+
+Run it from a clean `main` checkout with Ruby 3.2+, Bundler, Git push access, and RubyGems credentials (`gem signin`, including MFA when prompted). It pulls `main` with fast-forward only, shows commits since the last version change, and prompts for a higher `MAJOR.MINOR.PATCH` version (default: next patch).
+
+The script creates a release branch, updates the version, `RELEASE_NOTES.md`, and lockfile, runs Rails unit and system tests, commits those files, builds into `build/gems`, and publishes to RubyGems. It then fast-forwards `main`, pushes it, and pushes only the new `vVERSION` tag. System tests require Chrome/Chromium, as in CI.
+
+Dependency or test failures restore the original files and return to `main`, keeping the release branch for diagnosis. Failures after the commit leave the commit and build available. If upload fails, retry the printed `gem push` command; after a successful upload, finish the Git steps manually if necessary. RubyGems publication cannot be undone by Git rollback; do not rerun the whole script after a successful upload.
+
+To install this gem onto your local machine, run `bundle exec rake install`. Use `ruby script/release.rb` for releases as described above.
 
 ### Playground & Chat
 
