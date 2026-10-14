@@ -55,6 +55,9 @@ class ToolSchemaTest < Minitest::Test
 
     # Should use the tool_name from ToolMeta ("echo"), not the Ruby class name
     assert_equal 'echo', tool_instance.name
+    schema = ruby_tool_class.respond_to?(:params) ? tool_instance.params_schema : tool_instance.parameters_schema
+    assert_equal 'string', schema.dig('properties', 'message', 'type')
+    assert_equal 'integer', schema.dig('properties', 'times', 'type')
   end
 
   def test_fast_mcp_builder_handles_nested_object_params
@@ -92,10 +95,10 @@ class ToolSchemaTest < Minitest::Test
     params_proc = ToolSchema::RubyLlmBuilder.params_block(params_ast)
 
     tool_class = Class.new(RubyLLM::Tool) do
-      params(&params_proc)
+      public_send(RubyLLM::Tool.respond_to?(:params) ? :params : :parameters, &params_proc)
     end
 
-    schema = tool_class.new.params_schema
+    schema = tool_class.respond_to?(:params) ? tool_class.new.params_schema : tool_class.new.parameters_schema
     payload_prop = schema['properties']['payload']
 
     assert_equal 'object', payload_prop['type']
@@ -154,10 +157,10 @@ class ToolSchemaTest < Minitest::Test
     # This should not raise "undefined method 'float'" error
     # RubyLLM uses `number` not `float`
     tool_class = Class.new(RubyLLM::Tool) do
-      params(&params_proc)
+      public_send(RubyLLM::Tool.respond_to?(:params) ? :params : :parameters, &params_proc)
     end
 
-    schema = tool_class.new.params_schema
+    schema = tool_class.respond_to?(:params) ? tool_class.new.params_schema : tool_class.new.parameters_schema
     progress_prop = schema['properties']['progress']
 
     assert_equal 'number', progress_prop['type']

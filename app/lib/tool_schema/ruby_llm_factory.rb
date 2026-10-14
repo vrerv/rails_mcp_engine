@@ -24,7 +24,8 @@ module ToolSchema
       tool_name = T.let(schema[:name], String)
       klass = Class.new(RubyLLM::Tool) do
         description(schema[:description])
-        params(&RubyLlmBuilder.params_block(schema[:params]))
+        public_send(RubyLLM::Tool.respond_to?(:params) ? :params : :parameters,
+                    &RubyLlmBuilder.params_block(schema[:params]))
 
         # Override RubyLLM::Tool#name to use the tool_name from ToolMeta
         # instead of the auto-generated name from the Ruby class name.
