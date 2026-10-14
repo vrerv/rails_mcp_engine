@@ -42,10 +42,7 @@ module RailsMcpEngine
                  end
 
       # Create RubyLLM chat instance with configuration
-      chat = RubyLLM.chat(
-        provider: provider,
-        model: model
-      )
+      chat = build_chat(model, provider)
 
       # Register all available tools
       tool_classes = get_tool_classes
@@ -93,6 +90,14 @@ module RailsMcpEngine
     end
 
     private
+
+    def build_chat(model, provider)
+      options = { model: model, provider: provider }
+      if provider == :openai && defined?(RubyLLM::Protocols::ChatCompletions)
+        options[:protocol] = :chat_completions
+      end
+      RubyLLM.chat(**options)
+    end
 
     def schemas
       ToolMeta.registry.map { |service_class| ToolSchema::Builder.build(service_class) }
