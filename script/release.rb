@@ -6,6 +6,7 @@ require "date"
 require "rubygems"
 require "open3"
 require "shellwords"
+require "optparse"
 
 # Adapted from sh1nj1/plan42 (Collavre), script/release.rb.
 
@@ -19,7 +20,24 @@ class Release
     reset: "\e[0m"
   }.freeze
 
-  def initialize
+  def initialize(argv = [])
+    options = OptionParser.new do |parser|
+      parser.banner = "Usage: ruby script/release.rb [options]"
+      parser.on("--last-release-commit SHA", "Show changes after this release commit (full or abbreviated SHA)") do |sha|
+        @last_release_commit = sha
+      end
+      parser.on("-h", "--help", "Show this help") do
+        puts parser
+        exit 0
+      end
+    end
+    begin
+      options.parse!(argv)
+      raise OptionParser::InvalidArgument, argv.join(" ") unless argv.empty?
+    rescue OptionParser::ParseError => e
+      abort "#{e.message}\n#{options}"
+    end
+
     @project_root = File.expand_path("..", __dir__)
     @engines_dir = @project_root
     @build_dir = File.join(@project_root, "build", "gems")
@@ -36,6 +54,7 @@ class Release
 
     print_header
     check_prerequisites
+    validate_last_release_commit
 
     # Step 1: Analyze changes first (before creating branch)
     collect_changes_and_prompt_versions
@@ -109,15 +128,7 @@ class Release
     end
 
     current_version = extract_version(version_file)
-    last_version_commit = git_output("log", "-1", "--format=%H", "--", version_file).strip
-
-    commits = if last_version_commit.empty?
-      git_output("log", "--oneline", "--", engine_dir).lines.first(20)
-    else
-      git_output("log", "--oneline", "#{last_version_commit}..HEAD", "--", engine_dir).lines
-    end
-
-    commits = commits.map(&:strip).reject(&:empty?)
+    commits = changes_since_last_release(engine_dir, version_file)
 
     if commits.any?
       @engine_commits[engine] = commits
@@ -150,6 +161,29 @@ class Release
     else
       puts colorize(:yellow, "#{engine}:") + " No changes since last release (staying at #{current_version})"
     end
+  end
+
+  def validate_last_release_commit
+    return unless @last_release_commit
+
+    unless @last_release_commit.match?(/\A[0-9a-fA-F]{4,40}\z/)
+      abort "Last release commit must be a full or abbreviated commit SHA."
+    end
+    commit, status = Open3.capture2e("git", "rev-parse", "--verify", "#{@last_release_commit}^{commit}")
+    abort "Last release commit not found or ambiguous: #{@last_release_commit}" unless status.success?
+    @last_release_commit = commit.strip
+    _, status = Open3.capture2e("git", "merge-base", "--is-ancestor", @last_release_commit, "HEAD")
+    abort "Last release commit must be an ancestor of HEAD." unless status.success?
+  end
+
+  def changes_since_last_release(engine_dir, version_file)
+    baseline = @last_release_commit || git_output("log", "-1", "--format=%H", "--", version_file).strip
+    commits = if baseline.empty?
+      git_output("log", "--oneline", "--", engine_dir).lines.first(20)
+    else
+      git_output("log", "--oneline", "#{baseline}..HEAD", "--", engine_dir).lines
+    end
+    commits.map(&:strip).reject(&:empty?)
   end
 
   def check_remote_tag(version)
@@ -377,4 +411,4 @@ class Release
   end
 end
 
-Release.new.run if $PROGRAM_NAME == __FILE__
+Release.new(ARGV).run if $PROGRAM_NAME == __FILE__
