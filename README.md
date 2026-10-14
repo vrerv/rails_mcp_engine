@@ -127,7 +127,7 @@ The script creates a release branch, updates the version, `RELEASE_NOTES.md`, an
 
 Dependency or test failures restore the original files and return to `main`, keeping the release branch for diagnosis. Failures after the commit leave the commit and build available. If upload fails, retry the printed `gem push` command; after a successful upload, finish the Git steps manually if necessary. RubyGems publication cannot be undone by Git rollback; do not rerun the whole script after a successful upload.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`. Use `ruby script/release.rb` for releases as described above.
 
 ### Playground & Chat
 

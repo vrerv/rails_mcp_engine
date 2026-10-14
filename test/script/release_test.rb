@@ -70,6 +70,39 @@ class ReleaseScriptTest < Minitest::Test
     refute @release.commands.any? { |command| command[0, 2] == ['git', 'commit'] }
   end
 
+  def test_upload_failure_prints_the_same_host_and_quoted_path
+    command = ['gem', 'push', File.join(@dir, 'build/gems/rails_mcp_engine-0.4.4.gem'), '--host', 'https://rubygems.org']
+    @release.failure = command
+    output, = capture_io { assert_raises(SystemExit) { @release.send(:build_and_push_gems) } }
+    retry_line = output.lines.find { |line| line.start_with?('  gem push ') }
+    assert_equal command, Shellwords.split(retry_line)
+  end
+
+  def test_remote_only_tag_is_rejected_and_missing_tag_is_allowed
+    remote = File.join(@dir, 'remote.git')
+    checkout = File.join(@dir, 'checkout')
+    git!('init', '--bare', remote)
+    git!('clone', '--no-tags', remote, checkout)
+    Dir.chdir(checkout) do
+      git!('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--allow-empty', '-m', 'initial')
+      git!('tag', 'v0.4.4')
+      git!('push', 'origin', 'HEAD', 'refs/tags/v0.4.4')
+      git!('tag', '-d', 'v0.4.4')
+      release = Release.new
+      output, error = capture_io { assert_raises(SystemExit) { release.send(:check_remote_tag, '0.4.4') } }
+      assert_includes output + error, 'Remote tag already exists'
+      release.send(:check_remote_tag, '0.4.5')
+      git!('remote', 'set-url', 'origin', File.join(@dir, 'missing.git'))
+      output, error = capture_io { assert_raises(SystemExit) { release.send(:check_remote_tag, '0.4.5') } }
+      assert_includes output + error, 'Could not verify remote tag'
+    end
+  end
+
+  def git!(*args)
+    output, status = Open3.capture2e('git', *args)
+    assert status.success?, output
+  end
+
   def test_only_release_tag_is_pushed
     capture_io { @release.send(:finalize_release) }
     assert_includes @release.commands, ['git', 'push', 'origin', 'refs/tags/v0.4.4']

@@ -5,6 +5,7 @@ require "fileutils"
 require "date"
 require "rubygems"
 require "open3"
+require "shellwords"
 
 # Adapted from sh1nj1/plan42 (Collavre), script/release.rb.
 
@@ -141,6 +142,7 @@ class Release
         abort "New version must be a higher MAJOR.MINOR.PATCH version."
       end
       abort "Tag already exists: v#{new_version}" if system("git", "show-ref", "--verify", "--quiet", "refs/tags/v#{new_version}")
+      check_remote_tag(new_version)
       @engine_versions[engine] = new_version
       @changed_engines << engine
 
@@ -148,6 +150,13 @@ class Release
     else
       puts colorize(:yellow, "#{engine}:") + " No changes since last release (staying at #{current_version})"
     end
+  end
+
+  def check_remote_tag(version)
+    tag = "refs/tags/v#{version}"
+    _, status = Open3.capture2("git", "ls-remote", "--exit-code", "--tags", "origin", tag)
+    abort "Remote tag already exists: v#{version}" if status.success?
+    abort "Could not verify remote tag v#{version}; release cancelled." unless status.exitstatus == 2
   end
 
   def create_release_branch
@@ -285,11 +294,12 @@ class Release
       gem_path = File.join(@build_dir, gem_filename)
       info "Pushing #{gem_filename}..."
 
-      unless system("gem", "push", gem_path, "--host", "https://rubygems.org")
+      push_command = ["gem", "push", gem_path, "--host", "https://rubygems.org"]
+      unless system(*push_command)
         error "Failed to push #{gem_filename}"
         puts
         warn "You can retry manually:"
-        puts "  gem push #{gem_path}"
+        puts "  #{Shellwords.join(push_command)}"
         exit 1
       end
 
